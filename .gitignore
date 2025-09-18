@@ -55,5 +55,8 @@ rsconnect/
 data/*.tsv
 data/*.txt
 data/*.csv
+data/*.gmt
 output/processed_data/*.tsv
 output/processed_data/*.rds
+output/processed_data/degs/*.tsv
+output/processed_data/gsea/*.tsv

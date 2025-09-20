@@ -7,7 +7,7 @@ compare_years_blood <-
   function(file2017, file2018, sig_level, fc_lower, fc_upper, output_filename){
     
     degs2017 <- 
-      read.delim(file2017) %>%
+      read.delim(file2017, header = T) %>%
       dplyr::filter(padj < sig_level,
              log2FoldChange > fc_upper | log2FoldChange < fc_lower) %>%
       dplyr::select(geneID,

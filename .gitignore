@@ -60,6 +60,12 @@ output/processed_data/*.tsv
 output/processed_data/*.rds
 output/processed_data/degs/*.tsv
 output/processed_data/gsea/*.tsv
+output/processed_data/degs/unique/*.rds
+output/processed_data/degs/unique/*.csv
 
 # If Mac
+/.DS_Store
 output/.DS_Store
+output/processed_data/.DS_Store
+output/processed_data/degs/.DS_Store
+output/processed_data/degs/unique/.DS_Store

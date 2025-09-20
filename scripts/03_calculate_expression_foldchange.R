@@ -2,7 +2,7 @@ library(DESeq2)
 library(dplyr)
 library(edgeR)
 library(BiocParallel)
-register(MulticoreParam(3))
+register(MulticoreParam(20))
 
 ####
 ## Takes raw microarray and RNAseq data as input, log transforms and generates

@@ -47,7 +47,7 @@ responsetable$sheddD7_Noshedd<- ifelse(responsetable$SheddingD7Sum == 0, 1, 0)
 
 responsetable <- 
   responsetable %>% 
-  select(subid1, year, HR_2x_max_iga_fc,
+  dplyr::select(subid1, year, HR_2x_max_iga_fc,
          HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc, HR_2x_max_mnp_cd8_fc,
          sheddD2_Noshedd, sheddD2_1orMore,
          sheddD2_2orMore,sheddD7_Noshedd,
@@ -60,12 +60,12 @@ responsetableV2$sample_id <- paste0(responsetableV0$subid1, "_V2")
 
 
 mastercoldata <- rbind(responsetableV0, responsetableV2) %>% arrange(subid1)
-mastercoldata <- mastercoldata %>% filter(sample_id  %in% samples)
+mastercoldata <- mastercoldata %>% dplyr::filter(sample_id  %in% samples)
 mastercoldata$timepoint <- gsub("^[A-Z][0-9][0-9][0-9][A-Z]_", "", mastercoldata$sample_id)
 colnames(mastercoldata)[1] <- "id"
 mastercoldata <- 
   mastercoldata %>% 
-  select(id, year, sample_id, timepoint,  
+  dplyr::select(id, year, sample_id, timepoint,  
          HR_2x_max_iga_fc, HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc,
          HR_2x_max_mnp_cd8_fc,
          sheddD2_Noshedd, sheddD2_1orMore, sheddD2_2orMore,
@@ -82,7 +82,7 @@ subjects <-
 subjects <-  unlist(subjects)
 
 mastercoldata <- 
-  mastercoldata %>% filter(id %in% subjects)
+  mastercoldata %>% dplyr::filter(id %in% subjects)
 
 
 ####
@@ -100,23 +100,23 @@ for (cohort in 1:length(rawdata)) {
     data_ids <- gsub("_V.", "", colnames(data))
     coldata <- mastercoldata
     coldata <- coldata %>%
-      select(id, sample_id, timepoint, all_of(variable)) %>%
-      filter(sample_id %in% colnames(data))
+      dplyr::select(id, sample_id, timepoint, all_of(variable)) %>%
+      dplyr::filter(sample_id %in% colnames(data))
     coldata <- coldata[complete.cases(coldata),]
-    data <- data %>% select(all_of(coldata$sample_id))
+    data <- data %>% dplyr::select(all_of(coldata$sample_id))
     row.names(coldata) <- coldata$sample_id
     coldata$sample_id <- NULL
     coldata$id <- factor(coldata$id)
     coldata$timepoint <- factor(coldata$timepoint, levels=c("V0", "V2"))
     colnames(coldata)[3] <- "group"
 
-    coldataLow <- coldata %>% filter(group == 0) %>% select(id, timepoint)
+    coldataLow <- coldata %>% filter(group == 0) %>% dplyr::select(id, timepoint)
     coldataLow$id <- factor(coldataLow$id)
-    dataLow  <- data %>% select(all_of(row.names(coldataLow)))
+    dataLow  <- data %>% dplyr::select(all_of(row.names(coldataLow)))
     
-    coldataHigh <- coldata %>% filter(group == 1) %>% select(id, timepoint)
+    coldataHigh <- coldata %>% filter(group == 1) %>% dplyr::select(id, timepoint)
     coldataHigh$id <- factor(coldataHigh$id)
-    dataHigh  <- data %>% select(all_of(row.names(coldataHigh)))
+    dataHigh  <- data %>% dplyr::select(all_of(row.names(coldataHigh)))
     
     if(!(all(rownames(coldata) %in% colnames(data)))) {break}
     if(!(all(rownames(coldata) == colnames(data)))) {break}
@@ -132,7 +132,7 @@ for (cohort in 1:length(rawdata)) {
     resOrderedLow<- resLow[order(resLow$log2FoldChange),]
     DEGsLow <- as.data.frame(resOrderedLow)
     DEGsLow$geneID <- rownames(DEGsLow)
-    DEGsLow <- select(DEGsLow, c("geneID", "baseMean", "log2FoldChange","lfcSE", "stat","pvalue","padj"))
+    DEGsLow <- dplyr::select(DEGsLow, c("geneID", "baseMean", "log2FoldChange","lfcSE", "stat","pvalue","padj"))
     write.table(DEGsLow, filenameLow, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
     
     ddsHigh <- DESeqDataSetFromMatrix(countData = dataHigh, colData = coldataHigh, design = ~ id + timepoint)
@@ -141,7 +141,7 @@ for (cohort in 1:length(rawdata)) {
     resOrderedHigh<- resHigh[order(resHigh$log2FoldChange),]
     DEGsHigh <- as.data.frame(resOrderedHigh)
     DEGsHigh$geneID <- rownames(DEGsHigh)
-    DEGsHigh <- select(DEGsHigh, c("geneID", "baseMean", "log2FoldChange","lfcSE", "stat","pvalue","padj"))
+    DEGsHigh <- dplyr::select(DEGsHigh, c("geneID", "baseMean", "log2FoldChange","lfcSE", "stat","pvalue","padj"))
     write.table(DEGsHigh, filenameHigh, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
     
     }
@@ -155,12 +155,12 @@ row.names(rawdata$Nasal2017) <- rawdata$Nasal2017$geneid
 rawdata$Nasal2017$geneid <- NULL
 
 mastercoldata <- rbind(responsetableV0, responsetableV2) %>% arrange(subid1)
-mastercoldata <- mastercoldata %>% filter(sample_id  %in% samples)
+mastercoldata <- mastercoldata %>% dplyr::filter(sample_id  %in% samples)
 mastercoldata$timepoint <- gsub("^[A-Z][0-9][0-9][0-9][A-Z]_", "", mastercoldata$sample_id)
 colnames(mastercoldata)[1] <- "id"
 mastercoldata <- 
   mastercoldata %>% 
-  select(id, year, sample_id, timepoint,  
+  dplyr::select(id, year, sample_id, timepoint,  
          HR_2x_max_iga_fc, HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc,
          HR_2x_max_mnp_cd8_fc,
          sheddD2_Noshedd, sheddD2_1orMore, sheddD2_2orMore,
@@ -177,7 +177,7 @@ subjects <-
 subjects <-  unlist(subjects)
 
 mastercoldata <- 
-  mastercoldata %>% filter(id %in% subjects)
+  mastercoldata %>% dplyr::filter(id %in% subjects)
 
 for (cohort in 1:length(rawdata)) {
   for (immune in 5:ncol(mastercoldata)) {
@@ -194,22 +194,22 @@ for (cohort in 1:length(rawdata)) {
     data_ids <- gsub("_V.", "", colnames(data))
     coldata <- mastercoldata
     coldata <- coldata %>%
-      select(id, sample_id, timepoint, all_of(variable)) %>%
-      filter(sample_id %in% colnames(data))
+      dplyr::select(id, sample_id, timepoint, all_of(variable)) %>%
+      dplyr::filter(sample_id %in% colnames(data))
     coldata <- coldata[complete.cases(coldata),]
-    data <- data %>% select(all_of(coldata$sample_id))
+    data <- data %>% dplyr::select(all_of(coldata$sample_id))
     row.names(coldata) <- coldata$sample_id
     coldata$sample_id <- NULL
     coldata$id <- factor(coldata$id)
     coldata$timepoint <- factor(coldata$timepoint, levels=c("V0", "V2"))
     colnames(coldata)[3] <- "group"
     
-    coldataLow <- coldata %>% filter(group == 0) %>% select(id, timepoint)
+    coldataLow <- coldata %>% dplyr::filter(group == 0) %>% dplyr::select(id, timepoint)
     coldataLow$id <- factor(coldataLow$id)
-    dataLow  <- data %>% select(all_of(row.names(coldataLow)))
-    coldataHigh <- coldata %>% filter(group == 1) %>% select(id, timepoint)
+    dataLow  <- data %>% dplyr::select(all_of(row.names(coldataLow)))
+    coldataHigh <- coldata %>% dplyr::filter(group == 1) %>% dplyr::select(id, timepoint)
     coldataHigh$id <- factor(coldataHigh$id)
-    dataHigh  <- data %>% select(all_of(row.names(coldataHigh)))
+    dataHigh  <- data %>% dplyr::select(all_of(row.names(coldataHigh)))
     
     if(!(all(rownames(coldata) %in% colnames(data)))) {break}
     if(!(all(rownames(coldata) == colnames(data)))) {break}
@@ -226,26 +226,38 @@ for (cohort in 1:length(rawdata)) {
     
     fit <- lmFit(dataLow, design)
     contrast.matrix <- makeContrasts(contrasts = "V2-V0", levels = design)
+    
     fit2 <- contrasts.fit(fit, contrast.matrix)
     fit2 <- eBayes(fit2)
-    res_paired <- topTable(fit2, n = Inf, adjust = "BH")
-    #res_paired <- res_paired[res_paired$P.Value < 0.01,]
-    write.table(res_paired, filenameLow, sep = '\t', row.names = TRUE, col.names = TRUE, quote = FALSE)
+
+    coef_name <- colnames(fit2$coefficients)[1]  
+    # add in moderated SE for downstream meta-analysis: sqrt(s2.post) * stdev.unscaled
+    se_mod <- sqrt(fit2$s2.post) * fit2$stdev.unscaled
+    se_mod_vec <- se_mod[, coef_name]
+    
+    res_paired <- topTable(fit2, coef = coef_name, n = Inf, adjust = "BH")
+    res_paired$SE_mod <- se_mod_vec[rownames(res_paired)]
+    res_paired$geneID <- rownames(res_paired)
+    
+    write.table(res_paired, filenameLow, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
     
     rm(fit,fit2,res_paired)
     
-    
-    # Define model 
     design <- model.matrix(~0 + coldataHigh$timepoint + coldataHigh$id)
     colnames(design) <- gsub('coldataHigh\\$id|coldataHigh\\$timepoint', '', colnames(design))
-    
     fit <- lmFit(dataHigh, design)
     contrast.matrix <- makeContrasts(contrasts = "V2-V0", levels = design)
     fit2 <- contrasts.fit(fit, contrast.matrix)
     fit2 <- eBayes(fit2)
-    res_paired <- topTable(fit2, n = Inf, adjust = "BH")
-    #res_paired <- res_paired[res_paired$P.Value < 0.01,]
     
-    write.table(res_paired, filenameHigh, sep = '\t', row.names = TRUE, col.names = TRUE, quote = FALSE)
+    coef_name <- colnames(fit2$coefficients)[1]
+    se_mod <- sqrt(fit2$s2.post) * fit2$stdev.unscaled
+    se_mod_vec <- se_mod[, coef_name]
+    
+    res_paired <- topTable(fit2, coef = coef_name, n = Inf, adjust = "BH")
+    res_paired$SE_mod <- se_mod_vec[rownames(res_paired)]
+    res_paired$geneID <- rownames(res_paired)
+
+    write.table(res_paired, filenameHigh, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
     
   }}

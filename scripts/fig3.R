@@ -66,9 +66,9 @@ nasal_cd8_responder_down <- nasal_cd8$unique_responders$geneID[nasal_cd8$unique_
 ####
 ## Read in rlog values
 ####
-blood_2017_rlog <- read.table("./output/processed_data/Blood_2017_Rlog_normalized.tsv")
-blood_2018_rlog <- read.table("./output/processed_data/Blood_2018_Rlog_normalized.tsv")
-nasal_2018_rlog <- read.table("./output/processed_data/Nasal_2018_Rlog_normalized.tsv")
+blood_2017_rlog <- read.table("./output/processed_data/Blood_2017_Rlog_normalized.tsv", header = T)
+blood_2018_rlog <- read.table("./output/processed_data/Blood_2018_Rlog_normalized.tsv", header = T)
+nasal_2018_rlog <- read.table("./output/processed_data/Nasal_2018_Rlog_normalized.tsv", header = T)
 
 ####
 ## Read in metadata

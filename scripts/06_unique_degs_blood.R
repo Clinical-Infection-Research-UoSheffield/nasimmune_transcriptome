@@ -1,178 +1,199 @@
 library(dplyr)
+library(metafor)
 
 ####
 ## Functions
 ####
-compare_years_blood <- 
-  function(file2017, file2018, sig_level, fc_lower, fc_upper, output_filename){
+meta_analysis <- 
+  function(file2017, file2018, p_value, effect_size, comparison){
     
-    degs2017 <- 
-      read.delim(file2017, header = T) %>%
-      dplyr::filter(padj < sig_level,
-             log2FoldChange > fc_upper | log2FoldChange < fc_lower) %>%
-      dplyr::select(geneID,
-             log2FoldChange,
-             pvalue,
-             padj)
+    deg2017 <- read.table(file2017, sep = "\t", header = TRUE)
+    deg2018 <- read.table(file2018, sep = "\t", header = TRUE)
     
-    names(degs2017) <- c("geneID", "log2FC_2017", "p_2017", "padj_2017")
+    deg2017 <- dplyr::filter(deg2017, geneID %in% deg2018$geneID)
+    deg2018 <- dplyr::filter(deg2018, geneID %in% deg2017$geneID)
     
+    deg2017$year <- 2017
+    deg2018$year <- 2018
     
-    print(paste0("Number of 2017 DEGs: ", nrow(degs2017)))
-    
-    degs2018 <- 
-      read.delim(file2018) %>%
-      dplyr::filter(padj < sig_level,
-             log2FoldChange > fc_upper | log2FoldChange < fc_lower) %>%
-      dplyr::select(geneID,
-             log2FoldChange,
-             pvalue,
-             padj)
-    
-    names(degs2018) <- c("geneID", "log2FC_2018", "p_2018", "padj_2018")
-    print(paste0("Number of 2018 DEGs: ", nrow(degs2018)))
-    
-    shared_degs <- 
-      degs2017$geneID[degs2017$geneID %in% degs2018$geneID]
-    
-    shared_df <- 
-      left_join(
-        dplyr::filter(degs2017, geneID %in% shared_degs),
-        dplyr::filter(degs2018, geneID %in% shared_degs),
-        by = "geneID"
-      ) %>%
-      dplyr::select(
-        "geneID", 
-        "log2FC_2017",
-        "log2FC_2018",
-        "p_2017",
-        "p_2018", 
-        "padj_2017",
-        "padj_2018"
-      ) %>%
+    meta <- bind_rows(deg2017, deg2018) %>%
+      group_by(geneID) %>%
+      group_modify(~{
+        dat <- .x
+        k   <- nrow(dat)
+        
+        # Study-specific effects
+        eff_2017 <- if (any(dat$year == 2017)) dat$log2FoldChange[dat$year == 2017][1] else NA_real_
+        se_2017  <- if (any(dat$year == 2017)) dat$lfcSE[dat$year == 2017][1]          else NA_real_
+        eff_2018 <- if (any(dat$year == 2018)) dat$log2FoldChange[dat$year == 2018][1] else NA_real_
+        se_2018  <- if (any(dat$year == 2018)) dat$lfcSE[dat$year == 2018][1]          else NA_real_
+        
+        # If we don't have at least 2 studies or SEs are missing, return NA for meta outputs
+        if (k < 2 || all(is.na(dat$log2FoldChange)) || all(is.na(dat$lfcSE))) {
+          return(tibble(
+            k = k,
+            eff_2017 = eff_2017,
+            se_2017  = se_2017,
+            eff_2018 = eff_2018,
+            se_2018  = se_2018,
+            eff_meta_fixed   = NA_real_,
+            se_meta_fixed    = NA_real_,
+            z_fixed          = NA_real_,
+            p_fixed          = NA_real_,
+            eff_meta_random  = NA_real_,
+            se_meta_random   = NA_real_,
+            z_random         = NA_real_,
+            p_random         = NA_real_,
+            tau2             = NA_real_,
+            I2               = NA_real_
+          ))
+        }
+        
+        # Fixed-effect meta-analysis
+        fe <- tryCatch(
+          metafor::rma.uni(yi = dat$log2FoldChange,
+                           sei = dat$lfcSE,
+                           method = "FE"),
+          error = function(e) NULL
+        )
+        
+        # Random-effects meta-analysis (REML)
+        re <- tryCatch(
+          metafor::rma.uni(yi = dat$log2FoldChange,
+                           sei = dat$lfcSE,
+                           method = "REML"),
+          error = function(e) NULL
+        )
+        
+        tibble(
+          k = k,
+          eff_2017 = eff_2017,
+          se_2017  = se_2017,
+          eff_2018 = eff_2018,
+          se_2018  = se_2018,
+          
+          # Fixed effect
+          eff_meta_fixed  = if (!is.null(fe)) as.numeric(fe$b[1]) else NA_real_,
+          se_meta_fixed   = if (!is.null(fe)) fe$se[1]           else NA_real_,
+          z_fixed         = if (!is.null(fe)) fe$zval[1]         else NA_real_,
+          p_fixed         = if (!is.null(fe)) fe$pval[1]         else NA_real_,
+          
+          # Random effects (REML)
+          eff_meta_random = if (!is.null(re)) as.numeric(re$b[1]) else NA_real_,
+          se_meta_random  = if (!is.null(re)) re$se[1]            else NA_real_,
+          z_random        = if (!is.null(re)) re$zval[1]          else NA_real_,
+          p_random        = if (!is.null(re)) re$pval[1]          else NA_real_,
+          tau2            = if (!is.null(re)) re$tau2[1]          else NA_real_,
+          I2              = if (!is.null(re)) re$I2[1]            else NA_real_  # metafor gives % I²
+        )
+      }) %>%
+      ungroup() %>%
       mutate(
-          avg_log2FC = (log2FC_2017 + log2FC_2018)/2,
-          avg_padj= (padj_2017 + padj_2018) /2,
-          up_down_reg = ifelse(avg_log2FC > 0, "up", "down")
-      )
+        p_adj_fixed  = p.adjust(p_fixed,  method = "BH"),
+        p_adj_random = p.adjust(p_random, method = "BH")
+      ) %>%
+      arrange(p_random)
     
-    print(paste0("Number of shared DEGs: ", nrow(shared_df)))
-    write.csv(shared_df, 
-              output_filename, 
-              quote = F, row.names = F)
-    shared_df
+    write_csv(meta, paste0("./output/processed_data/degs/meta/", comparison, "all_genes.csv"))
+    
+    signif_genes <- meta %>% 
+      filter(p_adj_random < p_value, 
+             (eff_meta_random > effect_size | eff_meta_random < -effect_size) )
+    
+    signif_genes$up_down <- ifelse(signif_genes$eff_meta_random > effect_size, "Up", "Down")
+    
+    write_csv(signif_genes, paste0("./output/processed_data/degs/meta/", comparison, "signif_genes.csv"))
+    
+    return(signif_genes)
   }
 
 get_unique_degs <-
   function(nonresponder_degs, responder_degs){
-    n_shared_degs <-table(nonresponder_degs$geneID %in% responder_degs$geneID)["TRUE"]
-    n_unique_nonresponder <- nrow(nonresponder_degs) - n_shared_degs
-    n_unique_responder <- nrow(responder_degs) - n_shared_degs
-    shared_degs <- nonresponder_degs$geneID[nonresponder_degs$geneID %in% responder_degs$geneID]
-    unique_nonresponder <- nonresponder_degs[!(nonresponder_degs$geneID %in% responder_degs$geneID),]
-    unique_responder <-responder_degs[!(responder_degs$geneID %in% nonresponder_degs$geneID),]
+    up_degs_nonresponder <- dplyr::filter(nonresponder_degs, up_down == "Up")
+    up_degs_responder <- dplyr::filter(responder_degs, up_down == "Up")  
+    up_degs_responder_unique <- dplyr::filter(up_degs_responder, !(geneID %in% up_degs_nonresponder$geneID))
+    up_degs_non_responder_unique <- dplyr::filter(up_degs_nonresponder, !(geneID %in% up_degs_responder$geneID))
     
+    down_degs_nonresponder <- dplyr::filter(nonresponder_degs, up_down == "Down")
+    down_degs_responder <- dplyr::filter(responder_degs, up_down == "Down")  
+    down_degs_responder_unique <- dplyr::filter(down_degs_responder, !(geneID %in% down_degs_nonresponder$geneID))
+    down_degs_non_responder_unique <- dplyr::filter(down_degs_nonresponder, !(geneID %in% down_degs_responder$geneID))
     
-    print(paste0("Number of shared DEGS: ", n_shared_degs))
-    print(paste0("Number of unique non-responder DEGS: ", n_unique_nonresponder))
-    print(paste0("Number of unique non-responder Up-DEGS: ", table(unique_nonresponder$up_down_reg)["up"]))
-    print(paste0("Number of unique non-responder Down-DEGS: ", table(unique_nonresponder$up_down_reg)["down"]))
-    print(paste0("Number of unique responder DEGS: ", n_unique_responder))
-    print(paste0("Number of unique responder Up-DEGS: ", table(unique_responder$up_down_reg)["up"]))
-    print(paste0("Number of unique responder Down-DEGS: ", table(unique_responder$up_down_reg)["down"]))
+    print(paste0("Number of unique non-responder Up-DEGS: ", nrow(up_degs_non_responder_unique)))
+    print(paste0("Number of unique non-responder Down-DEGS: ", nrow(down_degs_non_responder_unique)))
+    print(paste0("Number of unique responder Up-DEGS: ", nrow(up_degs_responder_unique)))
+    print(paste0("Number of unique responder Down-DEGS: ", nrow(down_degs_responder_unique)))
     
     list(
-      shared_degs = shared_degs,
-      unique_nonresponders = unique_nonresponder,
-      unique_responders = unique_responder
+      unique_nonresponders = bind_rows(up_degs_non_responder_unique, down_degs_non_responder_unique),
+      unique_responders = bind_rows(up_degs_responder_unique, down_degs_responder_unique)
     )
   }
 
 
 ####
-## Get DEG shared between years
+## Combine study years with REML random-effect meta-analysis
 ####
 
 ##Blood HAI
 blood_hai <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_HIGH-HR_4x_max_gmfr_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_HIGH-HR_4x_max_gmfr_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_hai_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_HIGH-HR_4x_max_gmfr_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_HIGH-HR_4x_max_gmfr_DESEq2.tsv",
+                0.1, 
+                0.322,
+                "blood_hai")
 
 blood_nohai <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_LOW-HR_4x_max_gmfr_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_LOW-HR_4x_max_gmfr_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_nohai_shared.csv")
-
-ordered_hai_responder <- 
-  blood_hai %>%
-  mutate(avg_fc = (log2FC_2017 + log2FC_2018)/2) %>%
-  filter(!(geneID %in% blood_nohai$geneID)) %>%
-  arrange(desc(avg_fc))
-
-ordered_hai_nonresponder <- 
-  blood_nohai %>%
-  mutate(avg_fc = (log2FC_2017 + log2FC_2018)/2) %>%
-  filter(!(geneID %in% blood_hai$geneID)) %>%
-  arrange(desc(avg_fc))
-
+  meta_analysis("./output/processed_data/degs/Blood2017_LOW-HR_4x_max_gmfr_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_LOW-HR_4x_max_gmfr_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_nohai")
 
 ##Blood IgA
 blood_iga <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_iga_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_iga_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_iga_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_iga_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_iga_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_iga")
 
 blood_noiga <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_iga_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_iga_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_noiga_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_iga_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_iga_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_noiga")
 
 ##CD4
 blood_cd4 <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_cd4_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_cd4")
 
 blood_nocd4 <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_nocd4_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_mnp_cd4_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_nocd4")
 
 ## CD8
 blood_cd8 <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_cd8_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_HIGH-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_HIGH-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_cd8")
 
 blood_nocd8 <-
-  compare_years_blood("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
-                      "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
-                      0.1,
-                      -0.322,
-                      0.322,
-                      "./output/processed_data/degs/unique/blood_nocd8_shared.csv")
+  meta_analysis("./output/processed_data/degs/Blood2017_LOW-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_LOW-HR_2x_max_mnp_cd8_fc_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_nocd8")
 
 ####
 ## Unique DEGS

@@ -22,6 +22,7 @@ install.packages("ggtext")
 install.packages("svglite")
 install.packages("circlize")
 install.packages("scales")
+install.packages("metafor")
 
 
 if (!require("BiocManager", quietly = TRUE)){install.packages("BiocManager")}

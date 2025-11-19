@@ -27,41 +27,41 @@ get_all_children <- function(go_id, mapping_list) {
 ## read in DEGS
 ####
 blood_hai <- readRDS("./output/processed_data/degs/unique/blood_hai_degs.rds")
-blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down_reg == "up"]
-blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down_reg == "down"]
+blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Up"]
+blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Down"]
 
 
 blood_iga <- readRDS("./output/processed_data/degs/unique/blood_iga_degs.rds")
-blood_iga_responder_up <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down_reg == "up"]
-blood_iga_responder_down <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down_reg == "down"]
+blood_iga_responder_up <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down == "Up"]
+blood_iga_responder_down <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down == "Down"]
 
 blood_cd4 <- readRDS("./output/processed_data/degs/unique/blood_cd4_degs.rds")
-blood_cd4_responder_up <- blood_cd4$unique_responders$geneID[blood_cd4$unique_responders$up_down_reg == "up"]
-blood_cd4_responder_down <- blood_cd4$unique_responders$geneID[blood_cd4$unique_responders$up_down_reg == "down"]
+blood_cd4_responder_up <- blood_cd4$unique_responders$geneID[blood_cd4$unique_responders$up_down == "Up"]
+blood_cd4_responder_down <- blood_cd4$unique_responders$geneID[blood_cd4$unique_responders$up_down == "Down"]
 
 blood_cd8 <- readRDS("./output/processed_data/degs/unique/blood_cd8_degs.rds")
-blood_cd8_responder_up <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down_reg == "up"]
-blood_cd8_responder_down <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down_reg == "down"]
+blood_cd8_responder_up <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down == "Up"]
+blood_cd8_responder_down <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down == "Down"]
 
 blood_hai <- readRDS("./output/processed_data/degs/unique/blood_hai_degs.rds")
-blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down_reg == "up"]
-blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down_reg == "down"]
+blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Up"]
+blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Down"]
 
 nasal_hai <- readRDS("./output/processed_data/degs/unique/nasal_hai_degs.rds")
-nasal_hai_responder_up <- nasal_hai$unique_responders$geneID[nasal_hai$unique_responders$up_down_reg == "up"]
-nasal_hai_responder_down <- nasal_hai$unique_responders$geneID[nasal_hai$unique_responders$up_down_reg == "down"]
+nasal_hai_responder_up <- nasal_hai$unique_responders$geneID[nasal_hai$unique_responders$up_down == "Up"]
+nasal_hai_responder_down <- nasal_hai$unique_responders$geneID[nasal_hai$unique_responders$up_down == "Down"]
 
 nasal_iga <- readRDS("./output/processed_data/degs/unique/nasal_iga_degs.rds")
-nasal_iga_responder_up <- nasal_iga$unique_responders$geneID[nasal_iga$unique_responders$up_down_reg == "up"]
-nasal_iga_responder_down <- nasal_iga$unique_responders$geneID[nasal_iga$unique_responders$up_down_reg == "down"]
+nasal_iga_responder_up <- nasal_iga$unique_responders$geneID[nasal_iga$unique_responders$up_down == "Up"]
+nasal_iga_responder_down <- nasal_iga$unique_responders$geneID[nasal_iga$unique_responders$up_down == "Down"]
 
 nasal_cd4 <- readRDS("./output/processed_data/degs/unique/nasal_cd4_degs.rds")
-nasal_cd4_responder_up <- nasal_cd4$unique_responders$geneID[nasal_cd4$unique_responders$up_down_reg == "up"]
-nasal_cd4_responder_down <- nasal_cd4$unique_responders$geneID[nasal_cd4$unique_responders$up_down_reg == "down"]
+nasal_cd4_responder_up <- nasal_cd4$unique_responders$geneID[nasal_cd4$unique_responders$up_down == "Up"]
+nasal_cd4_responder_down <- nasal_cd4$unique_responders$geneID[nasal_cd4$unique_responders$up_down == "Down"]
 
 nasal_cd8 <- readRDS("./output/processed_data/degs/unique/nasal_cd8_degs.rds")
-nasal_cd8_responder_up <- nasal_cd8$unique_responders$geneID[nasal_cd8$unique_responders$up_down_reg == "up"]
-nasal_cd8_responder_down <- nasal_cd8$unique_responders$geneID[nasal_cd8$unique_responders$up_down_reg == "down"]
+nasal_cd8_responder_up <- nasal_cd8$unique_responders$geneID[nasal_cd8$unique_responders$up_down == "Up"]
+nasal_cd8_responder_down <- nasal_cd8$unique_responders$geneID[nasal_cd8$unique_responders$up_down == "Down"]
 
 ####
 ## Read in rlog values
@@ -132,6 +132,7 @@ enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_
 row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
+enriched_filtered$Term[4] <- "Negative Regulation of Type I Interferon" 
 
 plotEnrich(enriched_filtered, 
            showTerms = 8, 
@@ -140,11 +141,7 @@ plotEnrich(enriched_filtered,
            orderBy = "FDR",
            title = "",
            x = "") +
-           scale_fill_gradient(low = "red", high = "blue", 
-                               limits = c(0.0000001, 0.003), 
-                               breaks = c(0.0000001, 0.001, 0.002, 0.003),
-                               labels = c("0.0000001", "0.001", "0.002", "0.003"), ) +
-             guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
+           guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
 ggsave("./output/figs/fig3b2.svg", width = 8, height = 3)
 
@@ -352,3 +349,63 @@ nasal_rlog %>%
 ggsave("./output/figs/fig3g.svg", width = 4)
 
 
+
+
+
+
+
+
+
+
+
+nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
+nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
+
+#save file to use in cytoscape
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_hai_unique_up.csv", row.names = F)
+
+
+enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
+
+## Filter GO to include the lowest node
+signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
+
+go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
+
+bp_children_list <- as.list(GOBPCHILDREN)
+
+go_links <- 
+  lapply(go_ids, 
+         function(x){
+           all_descendants <- get_all_children(x, bp_children_list)
+           descendent_n <- all_descendants[all_descendants %in% go_ids]
+           tibble(GO = x, descendent_n = length(descendent_n))
+         }) %>%
+  bind_rows()
+
+terminal_go <- go_links$GO[go_links$descendent_n == 0]
+
+combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
+terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
+
+
+## filter enrichr output
+enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
+row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
+
+enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
+enriched_filtered[[1]][6] <- "Regulation Of Single Stranded Viral RNA Replication"
+enriched_filtered[[1]][8] <- "Regulation Of apoptotic signallting pathway"
+
+plotEnrich(enriched_filtered, 
+           showTerms = 8, 
+           numChar = 60, 
+           y = "Count", 
+           orderBy = "FDR",
+           title = "",
+           x = "") +
+# scale_fill_gradient(low = "red", high = "blue", 
+ #                     limits = c(0.0004, 0.02), 
+  #                    breaks = c(0.0004, 0.004, 0.01, 0.02),
+   #                   labels = c("0.0004","0.004","0.01", "0.02"), ) +
+  guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))

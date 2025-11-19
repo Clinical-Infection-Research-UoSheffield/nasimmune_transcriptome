@@ -166,11 +166,10 @@ ggsave("./output/figs/fig3c1.svg")
 ####
 ## Fig 3f
 ####
-nasal_non_hai_degs <- c(nasal_iga_responder_up, nasal_cd4_responder_up, nasal_cd8_responder_up)
-nasal_unique_up <- nasal_hai_responder_up[!(nasal_hai_responder_up %in% nasal_non_hai_degs)]
+nasal_unique_up <- nasal_hai_responder_up[nasal_hai_responder_up %in% nasal_cd4_responder_up]
 
 #save file to use in cytoscape
-write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_hai_unique_up.csv", row.names = F)
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_hai_cd4_up.csv", row.names = F)
 
 
 enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
@@ -202,8 +201,6 @@ enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_
 row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
-enriched_filtered[[1]][6] <- "Regulation Of Single Stranded Viral RNA Replication"
-enriched_filtered[[1]][8] <- "Regulation Of apoptotic signallting pathway"
 
 plotEnrich(enriched_filtered, 
            showTerms = 8, 
@@ -212,21 +209,72 @@ plotEnrich(enriched_filtered,
            orderBy = "FDR",
            title = "",
            x = "") +
-  scale_fill_gradient(low = "red", high = "blue", 
-                      limits = c(0.0004, 0.02), 
-                      breaks = c(0.0004, 0.004, 0.01, 0.02),
-                      labels = c("0.0004","0.004","0.01", "0.02"), ) +
   guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
 ggsave("./output/figs/fig3c2.svg", width = 6, height = 3)
+
+####
+## Fig 3f
+####
+
+nasal_non_cd4_degs <- c(nasal_iga_responder_up, nasal_hai_responder_up, nasal_cd8_responder_up)
+nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4_degs)]
+
+#save file to use in cytoscape
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_cd4_up.csv", row.names = F)
+
+
+enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
+
+## Filter GO to include the lowest node
+signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
+
+go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
+
+bp_children_list <- as.list(GOBPCHILDREN)
+
+go_links <- 
+  lapply(go_ids, 
+         function(x){
+           all_descendants <- get_all_children(x, bp_children_list)
+           descendent_n <- all_descendants[all_descendants %in% go_ids]
+           tibble(GO = x, descendent_n = length(descendent_n))
+         }) %>%
+  bind_rows()
+
+terminal_go <- go_links$GO[go_links$descendent_n == 0]
+
+combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
+terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
+
+
+## filter enrichr output
+enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
+row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
+
+enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
+
+plotEnrich(enriched_filtered, 
+           showTerms = 8, 
+           numChar = 60, 
+           y = "Count", 
+           orderBy = "FDR",
+           title = "",
+           x = "") +
+  guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
+
+ggsave("./output/figs/fig3c2.svg", width = 6, height = 3)
+
+
+
 
 ####
 ## Fig 3d
 ####
 blood_rlog <- 
     bind_cols(
-        blood_2017_rlog[c("MX1","HERC5"),],
-        blood_2018_rlog[c("MX1","HERC5"),]
+        blood_2017_rlog[c("IFIT1","HERC5"),],
+        blood_2018_rlog[c("IFIT1","HERC5"),]
     )
 
 blood_rlog <- as.data.frame(t(blood_rlog))
@@ -249,13 +297,13 @@ blood_rlog$HR_4x_max_gmfr <-
     factor(blood_rlog$HR_4x_max_gmfr, levels = c("Non-Responders", "Responders"))
 
 blood_rlog %>%
-    ggplot(aes(x = visit, y = MX1)) +
+    ggplot(aes(x = visit, y = IFIT1)) +
     geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
     geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
     stat_compare_means(method = "t.test", paired = T, label = "p.format", 
                        label.x = 1.25, label.y = 15.1) +
     facet_wrap(. ~ HR_4x_max_gmfr) +
-    ylab(expression(italic(MX1) ~ "Expression (rlog normalised)")) +
+    ylab(expression(italic(IFIT1) ~ "Expression (rlog normalised)")) +
     xlab("Days Post Vaccine") +
     scale_fill_manual(values = c("Non-Responders" = "#0C0C86" , 
                                "Responders" = "#0C860C")) +
@@ -289,7 +337,7 @@ ggsave("./output/figs/fig3e.svg", width = 4)
 ####
 ## Fig 3k
 ####
-nasal_rlog <- nasal_2018_rlog[c("MX1","HERC5"),]
+nasal_rlog <- nasal_2018_rlog[c("IFIT1","HELZ2"),]
 
 nasal_rlog <- as.data.frame(t(nasal_rlog))
 nasal_rlog$subid1 <- substr(rownames(nasal_rlog), 1, 5)
@@ -311,7 +359,7 @@ nasal_rlog$HR_4x_max_gmfr <-
   factor(nasal_rlog$HR_4x_max_gmfr, levels = c("Non-Responders", "Responders"))
 
 nasal_rlog %>%
-  ggplot(aes(x = visit, y = MX1)) +
+  ggplot(aes(x = visit, y = HELZ2)) +
   geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
   geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
   stat_compare_means(method = "t.test", paired = T, label = "p.format", 

@@ -108,7 +108,7 @@ meta_analysis <-
       ) %>%
       arrange(p_random)
     
-    write_csv(meta, paste0("./output/processed_data/degs/meta/", comparison, "all_genes.csv"))
+    write.csv(meta, paste0("./output/processed_data/degs/meta/", comparison, "all_genes.csv"))
     
     signif_genes <- meta %>% 
       filter(p_adj_random < p_value, 
@@ -116,7 +116,7 @@ meta_analysis <-
     
     signif_genes$up_down <- ifelse(signif_genes$eff_meta_random > effect_size, "Up", "Down")
     
-    write_csv(signif_genes, paste0("./output/processed_data/degs/meta/", comparison, "signif_genes.csv"))
+    write.csv(signif_genes, paste0("./output/processed_data/degs/meta/", comparison, "signif_genes.csv"))
     
     return(signif_genes)
   }

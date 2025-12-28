@@ -96,6 +96,7 @@ response_venn$layers[[3]]$data$x <- c(-1.5, -1.3, 1.3, 1.5)
 response_venn$layers[[3]]$data$y <- c(-0.9, 0.95, 0.95, -0.9)
 
 ggsave("./output/figs/fig3b1.svg")
+ggsave("./output/figs/fig3b1.png")
 
 blood_non_hai_degs <- c(blood_iga_responder_up, blood_cd4_responder_up, blood_cd8_responder_up)
 blood_unique_up <- blood_hai_responder_up[!(blood_hai_responder_up %in% blood_non_hai_degs)]
@@ -144,6 +145,7 @@ plotEnrich(enriched_filtered,
            guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
 ggsave("./output/figs/fig3b2.svg", width = 8, height = 3)
+ggsave("./output/figs/fig3b2.png", width = 8, height = 3)
 
 ####
 ## Fig 3c
@@ -162,15 +164,14 @@ response_venn$layers[[3]]$data$x <- c(-1.5, -1.3, 1.3, 1.5)
 response_venn$layers[[3]]$data$y <- c(-0.9, 0.95, 0.95, -0.9)
 
 ggsave("./output/figs/fig3c1.svg")
+ggsave("./output/figs/fig3c1.png")
 
-####
-## Fig 3f
-####
-nasal_unique_up <- nasal_hai_responder_up[nasal_hai_responder_up %in% nasal_cd4_responder_up]
+# enrichr
+nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
+nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
 
 #save file to use in cytoscape
-write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_hai_cd4_up.csv", row.names = F)
-
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_haicd4_unique_up.csv", row.names = F)
 
 enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
 
@@ -203,7 +204,7 @@ row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
 
 plotEnrich(enriched_filtered, 
-           showTerms = 8, 
+           showTerms = 6, 
            numChar = 60, 
            y = "Count", 
            orderBy = "FDR",
@@ -217,11 +218,11 @@ ggsave("./output/figs/fig3c2.svg", width = 6, height = 3)
 ## Fig 3f
 ####
 
-nasal_non_cd4_degs <- c(nasal_iga_responder_up, nasal_hai_responder_up, nasal_cd8_responder_up)
-nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4_degs)]
+nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
+nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
 
 #save file to use in cytoscape
-write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_cd4_up.csv", row.names = F)
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_haicd4_unique_up.csv", row.names = F)
 
 
 enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
@@ -255,7 +256,7 @@ row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
 
 plotEnrich(enriched_filtered, 
-           showTerms = 8, 
+           showTerms = 6, 
            numChar = 60, 
            y = "Count", 
            orderBy = "FDR",
@@ -398,62 +399,3 @@ ggsave("./output/figs/fig3g.svg", width = 4)
 
 
 
-
-
-
-
-
-
-
-
-nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
-nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
-
-#save file to use in cytoscape
-write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_hai_unique_up.csv", row.names = F)
-
-
-enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
-
-## Filter GO to include the lowest node
-signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
-
-go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
-
-bp_children_list <- as.list(GOBPCHILDREN)
-
-go_links <- 
-  lapply(go_ids, 
-         function(x){
-           all_descendants <- get_all_children(x, bp_children_list)
-           descendent_n <- all_descendants[all_descendants %in% go_ids]
-           tibble(GO = x, descendent_n = length(descendent_n))
-         }) %>%
-  bind_rows()
-
-terminal_go <- go_links$GO[go_links$descendent_n == 0]
-
-combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
-terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
-
-
-## filter enrichr output
-enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
-row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
-
-enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
-enriched_filtered[[1]][6] <- "Regulation Of Single Stranded Viral RNA Replication"
-enriched_filtered[[1]][8] <- "Regulation Of apoptotic signallting pathway"
-
-plotEnrich(enriched_filtered, 
-           showTerms = 8, 
-           numChar = 60, 
-           y = "Count", 
-           orderBy = "FDR",
-           title = "",
-           x = "") +
-# scale_fill_gradient(low = "red", high = "blue", 
- #                     limits = c(0.0004, 0.02), 
-  #                    breaks = c(0.0004, 0.004, 0.01, 0.02),
-   #                   labels = c("0.0004","0.004","0.01", "0.02"), ) +
-  guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))

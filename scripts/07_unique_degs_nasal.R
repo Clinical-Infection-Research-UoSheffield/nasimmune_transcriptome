@@ -209,6 +209,21 @@ nasal_nocd8 <-
                 0.322,
                 "nasal_nocd8")
 
+## shedding
+nasal_shed <-
+  meta_analysis("./output/processed_data/degs/Nasal2017_HIGH-sheddD2_2orMore_Limma.tsv",
+                "./output/processed_data/degs/Nasal2018_HIGH-sheddD2_2orMore_DESEq2.tsv",
+                0.1,
+                0.322,
+                "nasal_shed")
+
+nasal_noshed <-
+  meta_analysis("./output/processed_data/degs/Nasal2017_LOW-sheddD2_2orMore_Limma.tsv",
+                "./output/processed_data/degs/Nasal2018_LOW-sheddD2_2orMore_DESEq2.tsv",
+                0.1,
+                0.322,
+                "nasal_noshed")
+
 ####
 ## Unique DEGS
 ####
@@ -222,3 +237,5 @@ nasal_cd4_degs <- get_unique_degs(nasal_nocd4, nasal_cd4)
 saveRDS(nasal_cd4_degs, file = "./output/processed_data/degs/unique/nasal_cd4_degs.rds")
 nasal_cd8_degs <- get_unique_degs(nasal_nocd8, nasal_cd8)
 saveRDS(nasal_cd8_degs, file = "./output/processed_data/degs/unique/nasal_cd8_degs.rds")
+nasal_shed_degs <- get_unique_degs(nasal_noshed, nasal_shed)
+saveRDS(nasal_shed_degs, file = "./output/processed_data/degs/unique/nasal_shed_degs.rds")

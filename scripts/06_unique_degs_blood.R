@@ -195,6 +195,21 @@ blood_nocd8 <-
                 0.322,
                 "blood_nocd8")
 
+## shedding
+blood_shed <-
+  meta_analysis("./output/processed_data/degs/Blood2017_HIGH-sheddD2_2orMore_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_HIGH-sheddD2_2orMore_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_shed")
+
+blood_noshed <-
+  meta_analysis("./output/processed_data/degs/Blood2017_LOW-sheddD2_2orMore_DESEq2.tsv",
+                "./output/processed_data/degs/Blood2018_LOW-sheddD2_2orMore_DESEq2.tsv",
+                0.1,
+                0.322,
+                "blood_noshed")
+
 ####
 ## Unique DEGS
 ####
@@ -208,3 +223,5 @@ blood_cd4_degs <- get_unique_degs(blood_nocd4, blood_cd4)
 saveRDS(blood_cd4_degs, file = "./output/processed_data/degs/unique/blood_cd4_degs.rds")
 blood_cd8_degs <- get_unique_degs(blood_nocd8, blood_cd8)
 saveRDS(blood_cd8_degs, file = "./output/processed_data/degs/unique/blood_cd8_degs.rds")
+blood_shed_degs <- get_unique_degs(blood_noshed, blood_shed)
+saveRDS(blood_shed_degs, file = "./output/processed_data/degs/unique/blood_shed_degs.rds")

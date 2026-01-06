@@ -1,5 +1,5 @@
 # nasimmune_transcriptome
-Code to reproduce analysis from a manuscript title "Mucosal and Blood Transcriptomes Differentiate Immune Responses Following Live-Attenuated Influenza Vaccination in Children"
+Code to reproduce analysis from a manuscript title "Mucosal and Blood Transcriptomes Reveal Interferon-Driven Predictors of Influenza Vaccine Immunity in Children"
 
 ## Contents
 

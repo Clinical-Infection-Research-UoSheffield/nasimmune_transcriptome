@@ -82,14 +82,16 @@ names(unique_degs_df) <- c("geneID", "avg_fc", "avg_p")
 
 combined_nsl_degs$minuslog10_p <- -log10(combined_nsl_degs$p_adj_random)
 
-# obtained from enrichcr (see fig 3b below)
+# obtained from enrichcr (see fig 3b below) or -log10(padj) >2
+# Decision to show most significant DEGs to allow visualisation
 enriched_degs <- c(
   "ISG20", "IFITM1", "OAS1", "OAS3", "MX1", "IFIT5",
   "ISG15", "IFIT1", "APOBEC3A", "STAT2", "IFIT3", "IFIT2",
   "IL1B", "IRF7", "LCP1", "ZFP36", "SBNO2", "CXCL11",
   "LILRB2", "CSF1", "GPR183", "PRKCB", "LPIN1", "FFAR2",
   "TNFAIP6", "SLC7A5", "CXCR4", "MX2", "NFKBIA", "IFI6",
-  "CCL20", "IRF8", "TNFSF13B", "RASGRP3"
+  "CCL20", "IRF8", "TNFSF13B", "RASGRP3", "CD69", "CD83",
+  "HERC5", "IFI44L", "HELZ2", "CMPK2", "IFI44", "SERPINB9", "C19orf66"
 )
 
 combined_nsl_degs$unique_deg <- combined_nsl_degs$geneID %in% enriched_degs
@@ -139,15 +141,18 @@ ggplot() +
   geom_text_repel(data = dplyr::filter(combined_nsl_degs, unique_deg), 
                   aes(x = eff_meta_random, y = minuslog10_p, label = geneID),
                   min.segment.length = 0,
-                  max.overlaps = Inf,
-                  size = 2.75,
+                  max.overlaps = Inf ,
+                  size = 4,
                   color = "red",
                   fontface = "bold",
-                  text.padding = 1) +
+                  box.padding = 0.1,
+                  bg.color = "lightgrey",
+                  bg.r = 0.3,
+                  nudge_x = 0.04) +
   theme_classic() +
   theme(legend.position = "none", 
         axis.title = element_blank()) +
-  xlim(0.322, 1) +
+  xlim(0.322, 1.13) +
   ylim(1, 3.75)
 
 ggsave("./output/figs/fig3a_zoom.svg", height = 4, width = 4.8)
@@ -186,6 +191,7 @@ enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_
 row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
+enriched_filtered$Term[13] <- "Positive Regulation Of Vascular Endothelial Growth Factor Receptor"
 
 plotEnrich(enriched_filtered, 
            showTerms = 15, 
@@ -195,18 +201,20 @@ plotEnrich(enriched_filtered,
            title = "",
            x = "") +
   guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T)) +
-  scale_y_continuous(breaks = seq(0,9))
+  scale_y_continuous(breaks = seq(0,9)) +
+  theme(axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 12))
 
-ggsave("./output/figs/fig3b.svg", height = 4, width = 8)
+ggsave("./output/figs/fig3b.svg", height = 4, width = 9.6)
 
 all_enriched_genes <- unique(unlist(strsplit(enriched_filtered$Genes, ";")))
 
 ####
 ## Fig3c
-nsl_hai_genes <- c("IFIT1", "IRF4", "HERC5", "ZBP1", "DHX58", "MX1", "IFI6", "APOBEC3A", "IFIT1")
+boxplot_genes <- c("IFIT2")
 nasal_fc <- 
   FClist$NSL %>% 
-  dplyr::filter(gene %in% nsl_hai_genes) %>%
+  dplyr::filter(gene %in% boxplot_genes) %>%
   t() %>%
   as.data.frame()
 
@@ -224,44 +232,42 @@ nasal_shedding <-
 
 nasal_shedding$n_shed <- as.factor(nasal_shedding$n_shed)
 nasal_shedding$shedding <- nasal_shedding$n_shed != 0
-nasal_shedding$MX1 <- as.numeric(nasal_shedding$MX1)
-nasal_shedding$IFIT1 <- as.numeric(nasal_shedding$IFIT1)
-nasal_shedding$HERC5 <- as.numeric(nasal_shedding$HERC5)
+nasal_shedding$IFIT2 <- as.numeric(nasal_shedding$IFIT2)
 
 my_comparisons <- list( c("0", "1"), c("0", "2"), c("0", "3") )
 
 stat_test <- nasal_shedding %>% 
-  wilcox_test(IFIT1 ~ n_shed, comparisons = my_comparisons) %>%
+  wilcox_test(IFIT2 ~ n_shed, comparisons = my_comparisons) %>%
   add_xy_position(x = "n_shed") %>%
   mutate(myformatted.p = paste0("p = ", p))
 
-lm_test <- lm(IFIT1 ~ as.numeric(n_shed), data = nasal_shedding)
+lm_test <- lm(IFIT2~ as.numeric(n_shed), data = nasal_shedding)
 summary(lm_test)
 
 global_p <- summary(lm_test)$coefficients[2, 4] 
 formatted_global_p <- paste0("Linear trend p = ", signif(global_p, 3))
 
 nasal_shedding %>%
-  ggplot(aes(x = n_shed, y = IFIT1)) +
+  ggplot(aes(x = n_shed, y = IFIT2)) +
   geom_boxplot(outlier.shape = NA, colour = "darkblue") +
   geom_jitter(width = 0.1, size = 0.75, colour = "darkblue") +
-  annotate("text", x = 1.75, y = 5.75, label = formatted_global_p, size = 4, hjust = 0) +
+  annotate("text", x = 1.25, y = 5.75, label = formatted_global_p, size = 5, hjust = 0) +
   theme_bw() +
-  theme(axis.title = element_text(size = 10),
-        axis.text = element_text(size = 10)) +
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12)) +
   xlab("Number of strains shed") +
-  ylab(expression(italic(IFIT1) ~ "expression (" * Log[2] * " fold change)"))
+  ylab(expression(italic(IFIT2) ~ "expression (" * Log[2] * " fold change)"))
 
 ggsave("./output/figs/fig3c.svg", width = 4.8, height = 4)
 
 
 ####
-## Blood
+## Blood FC with shedding
 ####
-nsl_hai_genes <- c("IFIT1", "IRF4", "HERC5", "ZBP1", "DHX58", "MX1", "IFI6", "APOBEC3A", "IFIT1")
+boxplot_genes <- c("IFIT2")
 blood_fc <- 
   FClist$BLD %>% 
-  dplyr::filter(gene %in% nsl_hai_genes) %>%
+  dplyr::filter(gene %in% boxplot_genes) %>%
   t() %>%
   as.data.frame()
 
@@ -279,33 +285,31 @@ blood_shedding <-
 
 blood_shedding$n_shed <- as.factor(blood_shedding$n_shed)
 blood_shedding$shedding <- blood_shedding$n_shed != 0
-blood_shedding$MX1 <- as.numeric(blood_shedding$MX1)
-blood_shedding$IFIT1 <- as.numeric(blood_shedding$IFIT1)
-blood_shedding$HERC5 <- as.numeric(blood_shedding$HERC5)
+blood_shedding$IFIT2 <- as.numeric(blood_shedding$IFIT2)
 
 my_comparisons <- list( c("0", "1"), c("0", "2"), c("0", "3") )
 
-stat_test <- nblood_shedding %>% 
-  wilcox_test(IFIT1 ~ n_shed, comparisons = my_comparisons) %>%
+stat_test <- blood_shedding %>% 
+  wilcox_test(IFIT2 ~ n_shed, comparisons = my_comparisons) %>%
   add_xy_position(x = "n_shed") %>%
   mutate(myformatted.p = paste0("p = ", p))
 
-lm_test <- lm(IFIT1 ~ as.numeric(n_shed), data = blood_shedding)
+lm_test <- lm(IFIT2 ~ as.numeric(n_shed), data = blood_shedding)
 summary(lm_test)
 
 global_p <- summary(lm_test)$coefficients[2, 4] 
 formatted_global_p <- paste0("Linear trend p = ", signif(global_p, 3))
 
 blood_shedding %>%
-  ggplot(aes(x = n_shed, y = IFIT1)) +
+  ggplot(aes(x = n_shed, y = IFIT2)) +
   geom_boxplot(outlier.shape = NA, colour = "darkblue") +
   geom_jitter(width = 0.1, size = 0.75, colour = "darkblue") +
-  annotate("text", x = 1.75, y = 5.75, label = formatted_global_p, size = 4, hjust = 0) +
+  annotate("text", x = 1.4, y = 5.75, label = formatted_global_p, size = 5, hjust = 0) +
   theme_bw() +
-  theme(axis.title = element_text(size = 10),
-        axis.text = element_text(size = 10)) +
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12)) +
   xlab("Number of strains shed") +
-  ylab(expression(italic(IFIT1) ~ "expression (" * Log[2] * " fold change)"))
+  ylab(expression(italic(IFIT2) ~ "expression (" * Log[2] * " fold change)"))
 
 ggsave("./output/figs/fig3d.svg", width = 4.8, height = 4)
 

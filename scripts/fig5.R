@@ -30,7 +30,6 @@ blood_hai <- readRDS("./output/processed_data/degs/unique/blood_hai_degs.rds")
 blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Up"]
 blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Down"]
 
-
 blood_iga <- readRDS("./output/processed_data/degs/unique/blood_iga_degs.rds")
 blood_iga_responder_up <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down == "Up"]
 blood_iga_responder_down <- blood_iga$unique_responders$geneID[blood_iga$unique_responders$up_down == "Down"]
@@ -42,10 +41,6 @@ blood_cd4_responder_down <- blood_cd4$unique_responders$geneID[blood_cd4$unique_
 blood_cd8 <- readRDS("./output/processed_data/degs/unique/blood_cd8_degs.rds")
 blood_cd8_responder_up <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down == "Up"]
 blood_cd8_responder_down <- blood_cd8$unique_responders$geneID[blood_cd8$unique_responders$up_down == "Down"]
-
-blood_hai <- readRDS("./output/processed_data/degs/unique/blood_hai_degs.rds")
-blood_hai_responder_up <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Up"]
-blood_hai_responder_down <- blood_hai$unique_responders$geneID[blood_hai$unique_responders$up_down == "Down"]
 
 nasal_hai <- readRDS("./output/processed_data/degs/unique/nasal_hai_degs.rds")
 nasal_hai_responder_up <- nasal_hai$unique_responders$geneID[nasal_hai$unique_responders$up_down == "Up"]
@@ -81,7 +76,7 @@ metadata <- readRDS("./output/processed_data/metadata_cleaned.rds")
 blood_hai_responder <- read.table("./output/processed_data/degs/Blood2018_HIGH-HR_4x_max_gmfr_DESEq2.tsv", header = T)
 
 ####
-## Fig 3b
+## Fig 5b
 ####
 response_venn <- ggvenn(
   list("HAI" = blood_hai_responder_up, 
@@ -95,8 +90,8 @@ response_venn
 response_venn$layers[[3]]$data$x <- c(-1.5, -1.3, 1.3, 1.5)
 response_venn$layers[[3]]$data$y <- c(-0.9, 0.95, 0.95, -0.9)
 
-ggsave("./output/figs/fig3b1.svg")
-ggsave("./output/figs/fig3b1.png")
+ggsave("./output/figs/fig5b1.svg")
+ggsave("./output/figs/fig5b1.png")
 
 blood_non_hai_degs <- c(blood_iga_responder_up, blood_cd4_responder_up, blood_cd8_responder_up)
 blood_unique_up <- blood_hai_responder_up[!(blood_hai_responder_up %in% blood_non_hai_degs)]
@@ -144,11 +139,11 @@ plotEnrich(enriched_filtered,
            x = "") +
            guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
-ggsave("./output/figs/fig3b2.svg", width = 8, height = 3)
-ggsave("./output/figs/fig3b2.png", width = 8, height = 3)
+ggsave("./output/figs/fig5b2.svg", width = 8, height = 3)
+ggsave("./output/figs/fig5b2.png", width = 8, height = 3)
 
 ####
-## Fig 3c
+## Fig 5c
 ####
 
 response_venn <- ggvenn(
@@ -202,6 +197,7 @@ enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_
 row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
+enriched_filtered$Term[4] <- "Negative Regulation of Type I Interferon" 
 
 plotEnrich(enriched_filtered, 
            showTerms = 6, 
@@ -212,15 +208,14 @@ plotEnrich(enriched_filtered,
            x = "") +
   guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
-ggsave("./output/figs/fig3c2.svg", width = 6, height = 3)
+ggsave("./output/figs/fig5c2.svg", width = 8, height = 3)
 
 ####
-## Fig 3f
+## Fig 5c.1
 ####
 
 nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
 nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
-
 #save file to use in cytoscape
 write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_haicd4_unique_up.csv", row.names = F)
 
@@ -264,18 +259,18 @@ plotEnrich(enriched_filtered,
            x = "") +
   guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
-ggsave("./output/figs/fig3c2.svg", width = 6, height = 3)
+ggsave("./output/figs/fig5c2.svg", width = 6, height = 3)
 
 
 
 
 ####
-## Fig 3d
+## Fig 5d
 ####
 blood_rlog <- 
     bind_cols(
-        blood_2017_rlog[c("IFIT1","HERC5"),],
-        blood_2018_rlog[c("IFIT1","HERC5"),]
+        blood_2017_rlog[c("IFIT2","HERC5"),],
+        blood_2018_rlog[c("IFIT2","HERC5"),]
     )
 
 blood_rlog <- as.data.frame(t(blood_rlog))
@@ -298,13 +293,14 @@ blood_rlog$HR_4x_max_gmfr <-
     factor(blood_rlog$HR_4x_max_gmfr, levels = c("Non-Responders", "Responders"))
 
 blood_rlog %>%
-    ggplot(aes(x = visit, y = IFIT1)) +
+    ggplot(aes(x = visit, y = IFIT2)) +
     geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
     geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
     stat_compare_means(method = "t.test", paired = T, label = "p.format", 
-                       label.x = 1.25, label.y = 15.1) +
+                       label.x = 1.25, label.y = 15, size = 2.85
+                       ) +
     facet_wrap(. ~ HR_4x_max_gmfr) +
-    ylab(expression(italic(IFIT1) ~ "Expression (rlog normalised)")) +
+    ylab(expression(italic(IFIT2) ~ "Expression (rlog normalised)")) +
     xlab("Days Post Vaccine") +
     scale_fill_manual(values = c("Non-Responders" = "#0C0C86" , 
                                "Responders" = "#0C860C")) +
@@ -313,17 +309,17 @@ blood_rlog %>%
           axis.title.y = element_text(size = 10),
           axis.title.x = element_text(size = 10))
 
-ggsave("./output/figs/fig3d.svg", width = 4)
+ggsave("./output/figs/fig5d.svg", width = 3.5)
 
 ####
-## Fig 3e
+## Fig 5e
 ####
 blood_rlog %>%
   ggplot(aes(x = visit, y = HERC5)) +
   geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
   geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
   stat_compare_means(method = "t.test", paired = T, label = "p.format", 
-                     label.x = 1.25, label.y = 13.8) +
+                     label.x = 1.25, label.y = 13, size = 2.85) +
   facet_wrap(. ~ HR_4x_max_gmfr) +
   ylab(expression(italic(HERC5) ~ "Expression (rlog normalised)")) +  
   xlab("Days Post Vaccine") +
@@ -333,12 +329,12 @@ blood_rlog %>%
   theme(legend.position = "none",
         axis.title.y = element_text(size = 10),
         axis.title.x = element_text(size = 10))
-ggsave("./output/figs/fig3e.svg", width = 4)
+ggsave("./output/figs/fig5e.svg", width = 3.5)
 
 ####
-## Fig 3k
+## Fig 5f
 ####
-nasal_rlog <- nasal_2018_rlog[c("IFIT1","HELZ2"),]
+nasal_rlog <- nasal_2018_rlog[c("IFIT2","HERC5"),]
 
 nasal_rlog <- as.data.frame(t(nasal_rlog))
 nasal_rlog$subid1 <- substr(rownames(nasal_rlog), 1, 5)
@@ -360,13 +356,13 @@ nasal_rlog$HR_4x_max_gmfr <-
   factor(nasal_rlog$HR_4x_max_gmfr, levels = c("Non-Responders", "Responders"))
 
 nasal_rlog %>%
-  ggplot(aes(x = visit, y = HELZ2)) +
+  ggplot(aes(x = visit, y = IFIT2)) +
   geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
   geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
   stat_compare_means(method = "t.test", paired = T, label = "p.format", 
-                     label.x = 1.25, label.y = 10.8) +
+                     label.x = 1.25, label.y = 12, size = 2.85) +
   facet_wrap(. ~ HR_4x_max_gmfr) +
-  ylab(expression(italic(MX1) ~ "Expression (rlog normalised)")) + 
+  ylab(expression(italic(IFIT2) ~ "Expression (rlog normalised)")) + 
   xlab("Days Post Vaccine") +
   scale_fill_manual(values = c("Non-Responders" = "#0C0C86" , 
                                "Responders" = "#0C860C")) +
@@ -374,7 +370,7 @@ nasal_rlog %>%
   theme(legend.position = "none",
         axis.title.y = element_text(size = 10),
         axis.title.x = element_text(size = 10))
-ggsave("./output/figs/fig3f.svg", width = 4)
+ggsave("./output/figs/fig5f.svg", width = 3.5)
 
 
 ####
@@ -385,7 +381,7 @@ nasal_rlog %>%
   geom_boxplot(aes(fill = HR_4x_max_gmfr), outliers = F) +
   geom_jitter(width = 0.1, size = 0.6, alpha = 0.5) +
   stat_compare_means(method = "t.test", paired = T, label = "p.format", 
-                     label.x = 1.25, label.y = 9.8) +
+                     label.x = 1.25, label.y = 9.8, size = 2.85) +
   facet_wrap(. ~ HR_4x_max_gmfr) +
   ylab(expression(italic(HERC5) ~ "Expression (rlog normalised)")) + 
   xlab("Days Post Vaccine") +
@@ -395,7 +391,7 @@ nasal_rlog %>%
   theme(legend.position = "none",
         axis.title.y = element_text(size = 10),
         axis.title.x = element_text(size = 10))
-ggsave("./output/figs/fig3g.svg", width = 4)
+ggsave("./output/figs/fig5g.svg", width = 3.5)
 
 
 

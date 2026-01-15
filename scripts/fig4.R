@@ -1,4 +1,5 @@
 library(ggplot2)
+library(ggpubr)
 library(dplyr)
 library(ComplexHeatmap)
 library(circlize)
@@ -187,12 +188,12 @@ dev.off()
 ####
 ## Fig 3c
 ####
-nose_correlated_gene <- "MX1"
-blood_correlated_gene <- "CSF1"
+nose_correlated_genes <- c("MX1", "IL1B")
+blood_correlated_genes <- c("MX1", "IL1B", "CSF1")
 
 nasal_fc <- 
   FClist$NSL %>% 
-  dplyr::filter(gene %in% nose_correlated_gene) %>%
+  dplyr::filter(gene %in% nose_correlated_genes) %>%
   t() %>%
   as.data.frame()
 
@@ -202,12 +203,13 @@ nasal_fc <- nasal_fc[-1,]
 rownames(nasal_fc) <- NULL
 nasal_fc <- nasal_fc %>% 
     dplyr::select("subid", everything()) %>%
-    dplyr::filter(subid %in% shared_pids) %>%
-    dplyr::rename("nose" = all_of(nose_correlated_gene))
+    dplyr::filter(subid %in% shared_pids) 
+colnames(nasal_fc) <- paste0("nose_", colnames(nasal_fc))
+nasal_fc <- rename(nasal_fc, "subid" = nose_subid)
 
 blood_fc <- 
   FClist$BLD %>% 
-  dplyr::filter(gene %in% blood_correlated_gene) %>%
+  dplyr::filter(gene %in% blood_correlated_genes) %>%
   t() %>%
   as.data.frame() 
 
@@ -217,14 +219,46 @@ blood_fc <- blood_fc[-1,]
 rownames(blood_fc) <- NULL
 blood_fc <- blood_fc %>% 
     dplyr::select("subid", everything()) %>%
-    dplyr::filter(subid %in% shared_pids) %>%
-    dplyr::rename("blood" = all_of(blood_correlated_gene))
+    dplyr::filter(subid %in% shared_pids) 
+colnames(blood_fc) <- paste0("blood_", colnames(blood_fc))
+blood_fc <- rename(blood_fc, "subid" = blood_subid)
 
 cor_df <- left_join(nasal_fc, blood_fc)
-cor_df$nose <- as.numeric(cor_df$nose)
-cor_df$blood <- as.numeric(cor_df$blood)
+cor_df <- cor_df %>% mutate(across(2:6, as.numeric))
 
-ggplot(cor_df, aes(x = nose, y = blood)) +
+ggplot(cor_df, aes(x = nose_MX1, y = blood_MX1)) +
     geom_point() +
-    geom_smooth(method = lm)
+    geom_smooth(method = "lm", se = FALSE) + 
+    stat_cor(label.y = 4, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+    theme_bw()
+
+ggplot(cor_df, aes(x = nose_MX1, y = blood_IL1B)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  stat_cor(label.y = 2, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+
+ggplot(cor_df, aes(x = nose_MX1, y = blood_CSF1)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  stat_cor(label.y = 1.5, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+
+ggplot(cor_df, aes(x = nose_IL1B, y = blood_MX1)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  stat_cor(label.y = 2, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+
+ggplot(cor_df, aes(x = nose_IL1B, y = blood_CSF1)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  stat_cor(label.y = 1, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+
+ggplot(cor_df, aes(x = nose_IL1B, y = blood_IL6)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  stat_cor(label.y = 1, aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
 

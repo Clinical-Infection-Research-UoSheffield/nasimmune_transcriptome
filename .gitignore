@@ -64,6 +64,7 @@ output/processed_data/degs/unique/*.rds
 output/processed_data/degs/unique/*.csv
 output/processed_data/degs/meta/*
 output/figs/*
+scripts/venv/
 
 # If Mac
 /.DS_Store

@@ -134,10 +134,12 @@ def generate_roc_plot(
     sns.lineplot(x=fpr, y=tpr, label=f'AUC = {auc:.4f}', color='red', linewidth=2.5)
     sns.lineplot(x=[0, 1], y=[0, 1], linestyle='--', label='Random Chance (AUC = 0.50)', color='blue')
     
-    plt.title(f'ROC Curve for {title_prefix}', fontsize=16, fontweight='bold')
-    plt.xlabel('False Positive Rate', fontsize=12)
-    plt.ylabel('True Positive Rate', fontsize=12)
-    plt.legend(loc='lower right', fontsize=12)
+    #plt.title(f'ROC Curve for {title_prefix}', fontsize=16, fontweight='bold')
+    plt.xlabel('False Positive Rate', fontsize=16)
+    plt.ylabel('True Positive Rate', fontsize=16)
+    plt.legend(loc='lower right', fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     plt.tight_layout()
     
     # Clean filename and save as PDF
@@ -166,9 +168,11 @@ def generate_confusion_matrix_plot(
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
                     xticklabels=classes, yticklabels=classes,
                     annot_kws={"size": 16})
-        plt.title(f'Confusion Matrix for {title_prefix}', fontsize=16, fontweight='bold')
-        plt.xlabel('Predicted Label', fontsize=12)
-        plt.ylabel('True Label', fontsize=12)
+        #plt.title(f'Confusion Matrix for {title_prefix}', fontsize=16, fontweight='bold')
+        plt.xlabel('Predicted Label', fontsize=16)
+        plt.ylabel('True Label', fontsize=16)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
         plt.tight_layout()
         
         # Clean filename and save as PDF
@@ -189,7 +193,7 @@ def generate_permutation_plot(
 ) -> None:
 
     sns.set_style("whitegrid")
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(8, 6))
     
     # Calculate p-value
     n_permutations = len(null_scores)
@@ -199,10 +203,12 @@ def generate_permutation_plot(
     plt.axvline(real_score, color='red', linestyle='--', linewidth=2.5, 
                 label=f'Actual AUC = {real_score:.4f}\n(p-value = {p_value:.4f})')
     
-    plt.title(f'Permutation Test for {model_name}', fontsize=16, fontweight='bold')
-    plt.xlabel('AUC Score', fontsize=12)
-    plt.ylabel('Frequency', fontsize=12)
-    plt.legend(loc='upper right', fontsize=12)
+    #plt.title(f'Permutation Test for {model_name}', fontsize=16, fontweight='bold')
+    plt.xlabel('AUC Score', fontsize=16)
+    plt.ylabel('Frequency', fontsize=16)
+    plt.legend(loc='upper right', fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     plt.tight_layout()
     
     # Clean filename and save as PDF

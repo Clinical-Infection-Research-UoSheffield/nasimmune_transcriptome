@@ -42,10 +42,10 @@ responsetable$sheddD7_Noshedd<- ifelse(responsetable$SheddingD7Sum == 0, 1, 0)
 responsetable <- 
   responsetable %>% 
   dplyr::select(subid1, year, HR_2x_max_iga_fc,
-         HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc, HR_2x_max_mnp_cd8_fc,
-         sheddD2_Noshedd, sheddD2_1orMore,
-         sheddD2_2orMore,sheddD7_Noshedd,
-         sheddD7_1orMore, sheddD7_2orMore)
+                HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc, HR_2x_max_mnp_cd8_fc,
+                sheddD2_Noshedd, sheddD2_1orMore,
+                sheddD2_2orMore,sheddD7_Noshedd,
+                sheddD7_1orMore, sheddD7_2orMore)
 
 responsetableV0 <- responsetable
 responsetableV0$sample_id <- paste0(responsetableV0$subid1, "_V0")
@@ -60,11 +60,11 @@ colnames(mastercoldata)[1] <- "id"
 mastercoldata <- 
   mastercoldata %>% 
   dplyr::select(id, year, sample_id, timepoint,  
-         HR_2x_max_iga_fc, HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc,
-         HR_2x_max_mnp_cd8_fc,
-         sheddD2_Noshedd, sheddD2_1orMore, sheddD2_2orMore,
-         sheddD7_Noshedd, 
-         sheddD7_1orMore, sheddD7_2orMore
+                HR_2x_max_iga_fc, HR_4x_max_gmfr, HR_2x_max_mnp_cd4_fc,
+                HR_2x_max_mnp_cd8_fc,
+                sheddD2_Noshedd, sheddD2_1orMore, sheddD2_2orMore,
+                sheddD7_Noshedd, 
+                sheddD7_1orMore, sheddD7_2orMore
   )
 
 subjects <- 

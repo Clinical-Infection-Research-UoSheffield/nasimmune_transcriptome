@@ -73,7 +73,6 @@ metadata <- readRDS("./output/processed_data/metadata_cleaned.rds")
 ####
 ## Read in DESEQ
 ####
-blood_hai_responder <- read.table("./output/processed_data/degs/Blood2018_HIGH-HR_4x_max_gmfr_DESEq2.tsv", header = T)
 
 ####
 ## Fig 5b
@@ -129,6 +128,9 @@ row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
 
 enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filtered$Term) - 12)
 enriched_filtered$Term[4] <- "Negative Regulation of Type I Interferon" 
+
+write.csv(enriched_filtered, "./output/processed_data/degs/unique/blood_hai_enrichr.csv", row.names = F)
+
 
 plotEnrich(enriched_filtered, 
            showTerms = 8, 
@@ -214,8 +216,7 @@ ggsave("./output/figs/fig5c2.svg", width = 8, height = 3)
 ## Fig 5c.1
 ####
 
-nasal_non_cd4hai_degs <- c(nasal_iga_responder_up, nasal_cd8_responder_up)
-nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4hai_degs)]
+nasal_unique_up <- nasal_hai_responder_up
 #save file to use in cytoscape
 write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_haicd4_unique_up.csv", row.names = F)
 
@@ -252,7 +253,7 @@ enriched_filtered$Term <- substr(enriched_filtered$Term, 0, nchar(enriched_filte
 
 plotEnrich(enriched_filtered, 
            showTerms = 6, 
-           numChar = 60, 
+           numChar = 80, 
            y = "Count", 
            orderBy = "FDR",
            title = "",
@@ -260,9 +261,6 @@ plotEnrich(enriched_filtered,
   guides(fill=guide_colorbar(title="P (Adjusted)", reverse = T))
 
 ggsave("./output/figs/fig5c2.svg", width = 6, height = 3)
-
-
-
 
 ####
 ## Fig 5d
@@ -392,6 +390,124 @@ nasal_rlog %>%
         axis.title.y = element_text(size = 10),
         axis.title.x = element_text(size = 10))
 ggsave("./output/figs/fig5g.svg", width = 3.5)
+
+
+
+
+####
+## Look at other immune responses which aren't ploted but are mentioned in the text
+####
+# Blood IgA
+blood_non_iga_degs <- c(blood_hai_responder_up, blood_cd4_responder_up, blood_cd8_responder_up)
+blood_unique_up <- blood_iga_responder_up[!(blood_iga_responder_up %in% blood_non_iga_degs)]
+
+#save file to use in cytoscape
+write.csv(blood_unique_up, "./output/processed_data/degs/unique/blood_iga_unique_up.csv", row.names = F)
+
+enriched <- enrichr(blood_unique_up, "GO_Biological_Process_2023")
+
+## Filter GO to include the lowest node
+signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
+
+go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
+
+bp_children_list <- as.list(GOBPCHILDREN)
+
+go_links <- 
+  lapply(go_ids, 
+         function(x){
+           all_descendants <- get_all_children(x, bp_children_list)
+           descendent_n <- all_descendants[all_descendants %in% go_ids]
+           tibble(GO = x, descendent_n = length(descendent_n))
+         }) %>%
+  bind_rows()
+
+terminal_go <- go_links$GO[go_links$descendent_n == 0]
+
+combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
+terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
+
+
+## filter enrichr output
+enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
+row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
+
+write.csv(enriched_filtered, "./output/processed_data/degs/unique/blood_iga_enrichr.csv", row.names = F)
+
+#blood cd4
+blood_non_cd4_degs <- c(blood_hai_responder_up, blood_iga_responder_up, blood_cd8_responder_up)
+blood_unique_up <- blood_cd4_responder_up[!(blood_cd4_responder_up %in% blood_non_cd4_degs)]
+
+#save file to use in cytoscape
+write.csv(blood_unique_up, "./output/processed_data/degs/unique/blood_cd4_unique_up.csv", row.names = F)
+
+enriched <- enrichr(blood_unique_up, "GO_Biological_Process_2023")
+
+## Filter GO to include the lowest node
+signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
+
+go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
+
+bp_children_list <- as.list(GOBPCHILDREN)
+
+go_links <- 
+  lapply(go_ids, 
+         function(x){
+           all_descendants <- get_all_children(x, bp_children_list)
+           descendent_n <- all_descendants[all_descendants %in% go_ids]
+           tibble(GO = x, descendent_n = length(descendent_n))
+         }) %>%
+  bind_rows()
+
+terminal_go <- go_links$GO[go_links$descendent_n == 0]
+
+combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
+terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
+
+
+## filter enrichr output
+enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
+row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
+
+write.csv(enriched_filtered, "./output/processed_data/degs/unique/blood_iga_enrichr.csv", row.names = F)
+
+#nasal cd4
+nasal_non_cd4_degs <- c(nasal_hai_responder_up, nasal_iga_responder_up, nasal_cd8_responder_up)
+nasal_unique_up <- nasal_cd4_responder_up[!(nasal_cd4_responder_up %in% nasal_non_cd4_degs)]
+
+#save file to use in cytoscape
+write.csv(nasal_unique_up, "./output/processed_data/degs/unique/nasal_cd4_unique_up.csv", row.names = F)
+
+enriched <- enrichr(nasal_unique_up, "GO_Biological_Process_2023")
+
+## Filter GO to include the lowest node
+signif_go <- enriched$GO_Biological_Process_2023$Term[enriched$GO_Biological_Process_2023$Adjusted.P.value < 0.05]
+
+go_ids <- toupper(gsub(".*(GO:\\d+).*", "\\1", signif_go))
+
+bp_children_list <- as.list(GOBPCHILDREN)
+
+go_links <- 
+  lapply(go_ids, 
+         function(x){
+           all_descendants <- get_all_children(x, bp_children_list)
+           descendent_n <- all_descendants[all_descendants %in% go_ids]
+           tibble(GO = x, descendent_n = length(descendent_n))
+         }) %>%
+  bind_rows()
+
+terminal_go <- go_links$GO[go_links$descendent_n == 0]
+
+combined_pattern <- paste(substr(terminal_go, 4, 10), collapse = "|")
+terminal_names <- enriched$GO_Biological_Process_2023$Term[grepl(combined_pattern, enriched$GO_Biological_Process_2023$Term)]
+
+
+## filter enrichr output
+enriched_filtered <- enriched$GO_Biological_Process_2023[enriched$GO_Biological_Process_2023$Term %in% terminal_names,]
+row.names(enriched_filtered) <- seq(1, nrow(enriched_filtered))
+
+write.csv(enriched_filtered, "./output/processed_data/degs/unique/nasal_iga_enrichr.csv", row.names = F)
+
 
 
 

@@ -57,9 +57,11 @@ INTERFERON_GENES = [
     'XAF1', 'ZCCHC2', 'ZNFX1'
 ]
 # 10-gene signature discovered by the RFE
-CORE_SIGNATURE_GENES = ['KIF4A', 'DIAPH3', 'IL17D', 'ARHGAP23', 'KIR2DS4', 
-'SHROOM3', 'GBP1', 'SASH1', 'MID1', 'LTBP1']
-
+#CORE_SIGNATURE_GENES = ['LCNL1', 'SASH1', 'PTPRU', 'CXCL10', 
+ #                       'CEACAM8', 'SDC1', 'KIF4A', 'GPER1', 
+  #                      'TOP2A', 'DIAPH3']
+                        
+CORE_SIGNATURE_GENES = ['PTPRU', 'CXCL10', 'KIF4A', 'DIAPH3', 'GPER1']
 # The full list of 205 DEGs for validation
 ALL_DEGS = [
     "HSPA5", "POLR2A", "HCFC1", "FLNA", "HYOU1", "LDLR", "CSF1R", "EIF4G1",
@@ -517,9 +519,18 @@ def identify_core_biomarkers(
     X = data[all_genes]
     y = data[target_col]
     
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        test_size=0.3, 
+        random_state=RANDOM_STATE,  # For reproducible results
+        stratify=y
+    )
+    
+    logging.info(f"Data split: {len(X_train)} train, {len(X_test)} test.")
+    
     # Scale features before RFE
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_scaled = scaler.fit_transform(X_train)
 
     # Use a Random Forest as the estimator for RFE
     estimator = RandomForestClassifier(
@@ -530,8 +541,8 @@ def identify_core_biomarkers(
     )
     
     # RFE will select the top 10 features
-    selector = RFE(estimator, n_features_to_select=10, step=0.1, verbose=1)
-    selector = selector.fit(X_scaled, y)
+    selector = RFE(estimator, n_features_to_select=5, step=0.1, verbose=1)
+    selector = selector.fit(X_scaled, y_train)
     
     logging.info("RFE analysis complete.")
     

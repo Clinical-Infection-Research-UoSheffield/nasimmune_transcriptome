@@ -23,6 +23,8 @@ install.packages("svglite")
 install.packages("circlize")
 install.packages("scales")
 install.packages("metafor")
+install.packages("cellxgene.census", repos=c('https://chanzuckerberg.r-universe.dev', 'https://cloud.r-project.org'))
+
 
 
 if (!require("BiocManager", quietly = TRUE)){install.packages("BiocManager")}
@@ -43,10 +45,13 @@ BiocManager::install("AnnotationDbi")
 BiocManager::install("limma")
 BiocManager::install("ape")
 BiocManager::install("tidytree")
+BiocManager::install("BayesPrism")
 
 install.packages("devtools")
 library(devtools)
 install_github("wjawaid/enrichR")
+install_github("Danko-Lab/BayesPrism/BayesPrism")
+
 
 
 

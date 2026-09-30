@@ -10,21 +10,36 @@ options(tiledbsoma.init_buffer_bytes = 4 * 1024^3)
 
 # get Human Cell Atlas reference
 census <- open_soma(census_version = "2025-11-08")
+human_obs <- census$get("census_data")$get("homo_sapiens")$obs
+column_names <- human_obs$colnames()
 
 ## Look at metadata from HCA
 obs_df <- as.data.frame(
   census$get("census_data")$get("homo_sapiens")$obs$read(
     value_filter = "tissue == 'blood' & is_primary_data == TRUE & disease == 'normal' & suspension_type == 'cell'",
-    column_names = c("cell_type", "soma_joinid", "suspension_type")
+    column_names = c("cell_type", "soma_joinid", "suspension_type", "dataset_id", "assay", "cell_type_ontology_term_id")
   )$concat()
 )
 
-n_cells <- nrow(obs_df)
+filtered_cells <- obs_df %>%
+    filter(assay == "10x 3' v3")
+
+n_cells <- nrow(filtered_cells)
 print(paste("Total cells found:", n_cells))
 
-cell_freq <- as.data.frame(table(obs_df$cell_type)) %>%
+cell_freq <- as.data.frame(table(filtered_cells$cell_type)) %>%
     filter(Freq != 0) %>%
     arrange(desc(Freq))
+
+## Pull eosinophils from bone marrow as there are none in blood
+eosinophils <- as.data.frame(
+  census$get("census_data")$get("homo_sapiens")$obs$read(
+    value_filter = "tissue == 'bone marrow' & is_primary_data == TRUE & disease == 'normal' & suspension_type == 'cell'",
+    column_names = c("cell_type", "soma_joinid", "suspension_type", "dataset_id", "assay", "cell_type_ontology_term_id")
+  )$concat()
+) %>%
+  filter(assay == "10x 3' v3",
+         cell_type == "eosinophil")
 
 ## Filter for specific cell types
 cell_types <- c(
@@ -42,19 +57,18 @@ cell_types <- c(
     "effector memory CD8-positive, alpha-beta T cell",
     "T follicular helper cell",
     "regulatory T cell",
-    "mucosal invariant T cell",
-    "gamma-delta T cell",
     "natural killer cell",
     "naive B cell",
     "memory B cell",
     "transitional stage B cell",
     "plasmablast",
-    "plasmacytoid dendritic cell",
-    "myeloid dendritic cell",
-    "mast cell"
+    "basophil",
+    "eosinophil"
 )
 
-obs_df <- filter(obs_df, cell_type %in% cell_types)
+obs_df <- 
+  bind_rows(obs_df, eosinophils) %>%
+  filter(cell_type %in% cell_types)
 
 ## Take a random sample of 10,000 cells per type. If less than 10,000, include all cells 
 sampled_metadata <- obs_df %>%

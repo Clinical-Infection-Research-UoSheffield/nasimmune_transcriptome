@@ -33,8 +33,47 @@ raw_counts <- GetAssayData(sig_mat_seurat, assay = "RNA", slot = "counts")
 
 sc <- t(raw_counts)
 
-cell_type_labels <- sig_mat_seurat$cell_type
-cell_state_labels <- sig_mat_seurat$cell_type
+cell_type_labels <- as.character(sig_mat_seurat$cell_type)
+cell_state_labels <- as.character(sig_mat_seurat$cell_type)
+
+
+#collapse cell type labels
+cell_type_labels <- ifelse(cell_type_labels %in% 
+                             c("classical monocyte", 
+                               "intermediate monocyte", 
+                               "non-classical monocyte"),
+                           "monocyte",
+                           as.character(cell_type_labels))
+
+cell_type_labels <- ifelse(cell_type_labels %in% 
+        c("naive thymus-derived CD4-positive, alpha-beta T cell",
+        "central memory CD4-positive, alpha-beta T cell",
+        "effector memory CD4-positive, alpha-beta T cell",
+        "T follicular helper cell",
+        "regulatory T cell"),
+    "CD4-positive T cell",
+    as.character(cell_type_labels))
+
+cell_type_labels <- ifelse(cell_type_labels %in% 
+                             c("naive thymus-derived CD8-positive, alpha-beta T cell",
+                               "central memory CD8-positive, alpha-beta T cell",
+                               "effector memory CD8-positive, alpha-beta T cell"),
+                              "CD8-positive T cell",
+                           as.character(cell_type_labels))
+
+cell_type_labels <- ifelse(cell_type_labels %in% 
+                             c("naive B cell",
+                               "memory B cell",
+                               "transitional stage B cell",
+                               "plasmablast"),
+                           "B cell",
+                           as.character(cell_type_labels))
+
+cell_type_labels <- ifelse(cell_type_labels %in% 
+                             c("plasmacytoid dendritic cell",
+                                "myeloid dendritic cell"),
+                           "dendritic cells",
+                           as.character(cell_type_labels))
 
 #QC cell type labels
 pdf("./output/figs/bayesprism_cell_label_qc.pdf", width = 12, height = 12)
@@ -87,5 +126,35 @@ bloodPrism <- new.prism(
 )
 
 blood_deconvole <- run.prism(prism = bloodPrism, n.cores = 64)
-saveRDS(blood_deconvole, "./output/processed_data/blood_bayesprism_object.rds")
+saveRDS(blood_deconvole, "./output/processed_data/blood_bayesprism_sigmat.rds")
+
+# run deconvolution with signature genes
+diff_exp <- get.exp.stat(sc.dat=sc_protein_coding[,colSums(sc_protein_coding>0)>3],
+                              cell.type.labels=cell_type_labels,
+                              cell.state.labels=cell_state_labels,
+                              pseudo.count=0.1, 
+                              cell.count.cutoff=20,
+                              n.cores=1 
+)
+
+sc_gene_sig <- select.marker (sc.dat=sc_protein_coding,
+                                         stat=diff_exp,
+                                         pval.max=0.01,
+                                         lfc.min=0.1)
+
+bloodPrism <- new.prism(
+  reference=sc_gene_sig,
+  mixture=bulk,
+  input.type="count.matrix",
+  cell.type.labels = cell_type_labels,
+  cell.state.labels = cell_state_labels,
+  key=NULL,
+  outlier.cut=0.01,
+  outlier.fraction=0.1,
+)
+
+blood_deconvole <- run.prism(prism = bloodPrism, n.cores = 64)
+saveRDS(blood_deconvole, "./output/processed_data/blood_bayesprism_genesig.rds")
+
+
 

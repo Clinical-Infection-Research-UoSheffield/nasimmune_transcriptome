@@ -10,7 +10,6 @@ library(ggrepel)
 library(rstatix)
 library(enrichR)
 library(GO.db)
-library(circlize)
 set.seed(123)
 
 ####

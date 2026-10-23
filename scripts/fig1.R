@@ -178,7 +178,7 @@ pairwise_chisq$comparison <- factor(pairwise_chisq$comparison, levels = pairwise
 pairwise_chisq %>%
   ggplot(aes(x = odds_ratio, y = comparison)) +
   geom_tile(width = 0.045, height = 0.1) +
-  geom_errorbarh(aes(xmin = lower_95ci, xmax = upper_95ci, height = 0.1)) +
+  geom_errorbar(aes(xmin = lower_95ci, xmax = upper_95ci), orientation = "y", width = 0.1) +
   geom_vline(xintercept = 1, linetype = 2) +
   annotate(geom="text", x = 3, y=1.25, label="Adjusted P value = 0.01", size = 3) +
   xlab("Odds ratio") + 
@@ -189,4 +189,5 @@ pairwise_chisq %>%
         axis.title = element_text(size=12, face = "bold")
   )
 
-ggsave("./output/figs/fig1d.svg")
+ggsave("./output/figs/fig1d.svg", height = 2.5, width = 3.4)
+

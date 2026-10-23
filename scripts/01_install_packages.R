@@ -45,7 +45,6 @@ BiocManager::install("AnnotationDbi")
 BiocManager::install("limma")
 BiocManager::install("ape")
 BiocManager::install("tidytree")
-BiocManager::install("BayesPrism")
 
 install.packages("devtools")
 library(devtools)

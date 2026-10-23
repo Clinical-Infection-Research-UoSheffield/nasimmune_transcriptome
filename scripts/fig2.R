@@ -8,9 +8,8 @@ library(tidyr)
 library(ggpubr)
 library(ggrepel)
 library(rstatix)
-library(enrichR)
-library(GO.db)
-library(circlize)
+#library(enrichR)
+#library(GO.db)
 set.seed(123)
 
 ####
